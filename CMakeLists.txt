@@ -253,7 +253,7 @@ if(JAEGERTRACING_BUILD_EXAMPLES)
   aux_source_directory(examples allcpp)
   add_executable(app ${allcpp})
   target_link_libraries(app PUBLIC ${JAEGERTRACING_LIB})
-  target_compile_options(app PUBLIC "-O0")
+  target_compile_options(app PUBLIC "-g" "-O3" "-march=native" ) # "-O0"
 endif()
 
 if(BUILD_TESTING)

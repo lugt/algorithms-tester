@@ -1,13 +1,19 @@
-#include <iostream>
-#include <yaml-cpp/yaml.h>
-#include <jaegertracing/Tracer.h>
+#include "common_def.h"
 
-#include <random>
 
-typedef int INT32;
-typedef long long INT64;
-typedef unsigned int UINT32;
-typedef unsigned long long UINT64;
+enum SortMode {
+  Sort_Merge,
+  Sort_Quick,
+  Sort_Quick3,
+  Sort_Selection,
+  Sort_Bubble,
+  Sort_Insertion,
+  Sort_Std,
+  Sort_Std_Stable
+};
+
+INT32 *values = NULL;
+SortMode current_sortmode = Sort_Selection;
 
 namespace {
 
@@ -20,22 +26,18 @@ namespace {
       std::static_pointer_cast<opentracing::Tracer>(tracer));
   }
 
-  INT32 *values = NULL;
-
   void tracedInit(const std::unique_ptr<opentracing::Span> &parentSpan,
                   INT32 length) {
-    auto span = opentracing::Tracer::Global()->StartSpan(
-      "initialization", {opentracing::ChildOf(&parentSpan->context())});
+    AS_CHILD_SPAN(span, "initialization", parentSpan);
     std::ostringstream oss;
     oss << "length : " << length;
     span->SetBaggageItem("length", oss.str());
     // Initializing the Array in memory (compare with malloc?)
     values = new INT32[length];
 
-    auto randomSpan = opentracing::Tracer::Global()->StartSpan(
-      "rand-loop", {opentracing::ChildOf(&span->context())});
+    AS_CHILD_SPAN(randomSpan, "rand-loop", span);
     std::default_random_engine generator;
-    std::uniform_int_distribution<INT32> distribution(1, 99999999);
+    std::uniform_int_distribution<INT32> distribution(DISTRIBUTE_MIN, DISTRIBUTE_MAX);
     auto dice = std::bind(distribution, generator);
     for (INT32 i = 0; i < length; i++) {
       values[i] = dice();
@@ -44,30 +46,47 @@ namespace {
   }
 
   void tracedReduce(const std::unique_ptr<opentracing::Span> &parentSpan,
-                    INT32 length);
+                    INT32 length) {
 
-  void tracedLoop(const std::unique_ptr<opentracing::Span> &parentSpan) {
-    // start globla init of 50000
-    INT32 length = 10000000;
-    tracedInit(parentSpan, length);
-    tracedReduce(parentSpan, length);
+    std::string name = "basic-sort";
+    IFSORT(Sort_Bubble, name = "Sort_Bubble_Whole_Loop")
+    IFSORT(Sort_Insertion, name = "Sort_Insertion_Whole_Loop")
+    IFSORT(Sort_Merge, name = "Sort_Merge_Whole_Loop")
+    IFSORT(Sort_Quick, name = "Sort_Quick_Whole_Loop")
+    IFSORT(Sort_Selection, name = "Sort_Selection_Whole_Loop")
+    IFSORT(Sort_Std, name = "Sort_Std_Whole_Loop")
+    IFSORT(Sort_Std_Stable, name = "Sort_Std_Stable_Whole_Loop")
+
+    AS_CHILD_SPAN(span, name, parentSpan);
+
+    std::ostringstream oss;
+    oss << "length : " << length << ", Estimate : " << (log(length) * length);
+    span->SetBaggageItem("params", oss.str());
+    INT32 track_length = length;
+
+    IFSORT(Sort_Bubble, tracedBubble(values, track_length, span);)
+    IFSORT(Sort_Insertion, tracedInsertion(values, track_length, span);)
+    IFSORT(Sort_Merge, tracedMerge(values, track_length, span);)
+    IFSORT(Sort_Quick, tracedQuick(values, track_length, span);)
+    IFSORT(Sort_Selection, tracedSelection(values, track_length, span);)
+    IFSORT(Sort_Std, std::sort(&values[0], &values[track_length]))
+    IFSORT(Sort_Std_Stable, std::stable_sort(&values[0], &values[track_length]))
+
+    span->Finish();
   }
 
-  void tracedReduce(const std::unique_ptr<opentracing::Span> &parentSpan,
-                    INT32 length) {
-    auto span = opentracing::v2::Tracer::Global()->StartSpan(
-      "Merge-Sort-outer-loop", {ChildOf(&parentSpan->context())});
-    INT32 start = 0;
-    INT32 track_length = length;
-    for (INT32 i = 0; i < track_length; i++) {
-      auto inner_span = opentracing::v2::Tracer::Global()->StartSpan(
-        "Merge-Sort-inner-loop", {ChildOf(&span->context())});
+  void tracedLoop(SPTR &parentSpan) {
+    // start globla init of 50000
+    INT32 length = 50 * 1000;
+    for(INT32 stepWidth = 10 * 1000; stepWidth <= length; stepWidth += (5000)) {
+      tracedInit(parentSpan, length);
+      tracedReduce(parentSpan, stepWidth);
     }
   }
 
 
   void tracedFunction() {
-    auto span = opentracing::Tracer::Global()->StartSpan("Merge-Sort");
+    auto span = opentracing::Tracer::Global()->StartSpan("Sort-Program");
     tracedLoop(span);
   }
 
