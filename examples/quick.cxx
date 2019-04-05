@@ -4,11 +4,11 @@
 
 #include "common_def.h"
 
-int partition(int arr[], int left, int right) {
-  int pivot = arr[right];
+ELET_OFST partition(ELET arr[], ELET_OFST left, ELET_OFST right) {
+  ELET pivot = arr[right];
   //choose the rightest element as the pivot
-  int curr = left;
-  for (int i = left; i < right; i++) {
+  ELET_OFST curr = left;
+  for (ELET_OFST i = left; i < right; i++) {
     if (pivot > arr[i]) {
       //always put smaller element in the left
       std::swap(arr[curr], arr[i]);
@@ -20,15 +20,15 @@ int partition(int arr[], int left, int right) {
   return curr;
 }
 
-void quicksort(int arr[], int left, int right) {
+void quicksort(ELET arr[], ELET_OFST left, ELET_OFST right) {
   if (left < right) {
-    int p = partition(arr, left, right);
+    ELET_OFST p = partition(arr, left, right);
     quicksort(arr, left, p - 1);
     quicksort(arr, p + 1, right);
   }
 }
 
-void tracedQuick(INT32 *values, INT32 length, SPTR parent) {
+void tracedQuick(ELET *values, ELET_OFST length, SPTR parent) {
   AS_CHILD_SPAN(span, "tracedQuick", parent);
   quicksort(values, 0, length - 1);
 }
@@ -54,8 +54,8 @@ void bubble_sort(Iterator begin, Iterator end) {
   });
 }
 
-void tracedBubble(INT32 *values, INT32 length, SPTR parent) {
+void tracedBubble(ELET *values, ELET_OFST length, SPTR parent) {
   AS_CHILD_SPAN(span, "tracedBubble", parent);
-  I32VEC temp(values, values + length);
+  ELETVEC temp(values, values + length);
   bubble_sort(temp.begin(), temp.end());
 }

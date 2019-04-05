@@ -4,11 +4,11 @@
 
 #include "common_def.h"
 
-void tracedSelection(INT32 *values, INT32 track_length, SPTR parent) {
+void tracedSelection(ELET *values, ELET_OFST track_length, SPTR parent) {
   AS_CHILD_SPAN(span, "tracedSelection", parent);
-  for (INT32 i = 0; i < track_length; i++) {
-    INT32 smallest = i, sm_num = values[i];
-    for (INT32 j = i + 1; j < track_length; j++) {
+  for (ELET_OFST i = 0; i < track_length; i++) {
+    ELET_OFST smallest = i, sm_num = values[i];
+    for (ELET_OFST j = i + 1; j < track_length; j++) {
       if (values[j] < sm_num) smallest = i;
     }
     swap_num(smallest, i);
@@ -16,8 +16,9 @@ void tracedSelection(INT32 *values, INT32 track_length, SPTR parent) {
 }
 
 
-void insertion_sort(INT32 arr[], INT32 length) {
-  INT32 i, j, tmp;
+void insertion_sort(ELET arr[], ELET_OFST length) {
+  ELET_OFST i, j;
+  ELET tmp;
   for (i = 1; i < length; i++) {
     j = i;
     while (j > 0 && arr[j - 1] > arr[j]) {
@@ -29,7 +30,7 @@ void insertion_sort(INT32 arr[], INT32 length) {
   }
 }
 
-void insertion_stl(std::vector<int> &vec)
+void insertion_stl(std::vector<ELET> &vec)
 {
   for (auto it = vec.begin(); it != vec.end(); it++)
   {
@@ -43,7 +44,7 @@ void insertion_stl(std::vector<int> &vec)
   }
 }
 
-void tracedInsertion(INT32 *values, INT32 track_length, SPTR parent) {
+void tracedInsertion(ELET *values, ELET_OFST track_length, SPTR parent) {
   AS_CHILD_SPAN(span, "tracedInsertion", parent);
   insertion_sort(values, track_length);
 }
