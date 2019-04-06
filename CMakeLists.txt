@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.6)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -12,11 +12,11 @@ set(HUNTER_CONFIGURATION_TYPES "Release;Debug" CACHE STRING
 include(CMakeDependentOption)
 include(HunterGate)
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.23.5.tar.gz"
-    SHA1 "2c5c6fc1cf609d0856695d60f147594daf4e6b3e"
+    URL "https://github.com/ruslo/hunter/archive/v0.23.151.tar.gz"
+    SHA1 "68657b81508c2d3c248731b5a0c2125f19866721"
 )
 
-project(jaegertracing VERSION 0.5.0)
+project(algorithms VERSION 0.5.1)
 
 option(JAEGERTRACING_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
@@ -27,6 +27,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
     list(APPEND cxx_flags -Werror)
   endif()
 endif()
+
+# hunter_add_package(Boost)
+# find_package(Boost CONFIG REQUIRED)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   list(APPEND cxx_flags -Wno-unused-private-field)
@@ -249,12 +252,16 @@ configure_file(
   src/jaegertracing/Constants.h
   @ONLY)
 
-if(JAEGERTRACING_BUILD_EXAMPLES)
-  aux_source_directory(examples allcpp)
-  add_executable(app ${allcpp})
-  target_link_libraries(app PUBLIC ${JAEGERTRACING_LIB})
-  target_compile_options(app PUBLIC "-g" "-O3" "-march=native" ) # "-O0"
-endif()
+
+set(exe_llist examples dividenconquer)
+
+foreach(one ${exe_llist})
+  set(allcpp )
+  aux_source_directory(${one} allcpp)
+  add_executable(${one}_exe ${allcpp})
+  target_link_libraries(${one}_exe PUBLIC ${JAEGERTRACING_LIB})
+  target_compile_options(${one}_exe PUBLIC "-g" "-O3" "-march=native" ) # "-O0"
+endforeach()
 
 if(BUILD_TESTING)
   add_library(testutils
