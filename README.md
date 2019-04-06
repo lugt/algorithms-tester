@@ -1,14 +1,27 @@
 [![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![OpenTracing 1.0 Enabled][ot-img]][ot-url]
 
-# jaeger-client-cpp
+# Algorithms tester with Jaeger-tracing as time-profiler
+
+This is a algorithms testing & profiling & tracing framework designed for precise monitoring of algorithm performance and comprehensive insight on the details of the implementation.
+
+# Modules
+
+## Available modules up to now
++ The modules available here are 
+  - Sorting
+  - TopK number algorithms (where K is constant)
+  - Closest Pair of Points (Brute force + Divide & Conquer)
+
+
+## Jarger-cpp-client
 C++ OpenTracing binding for [Jaeger](https://www.jaegertracing.io/)
 
 ## Contributing
-
 Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Building
 
+AlgoRithms-tester is built
 jaeger-client-cpp is built using CMake. It will automatically download
 needed dependencies using [Hunter](https://docs.hunter.sh/en/latest/).
 
@@ -25,7 +38,8 @@ After building, the [example](./examples/App.cpp) program can be run
 with:
 
 ```bash
-    ./app ../examples/config.yml
+    ./examples_exe ../examples/config.yml
+    ./dividenconquer_exe ../examples/config.yml
 ```
 
 To run tests:
