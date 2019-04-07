@@ -4,12 +4,10 @@
 
 #include "common_def.h"
 
-
-INT32 DIVISION = 8;
-
-static INT64 *minimums;
-
-void quaterProblem (ELET * xvalues, ELET * yvalues, INT32 seq, ELET_OFST whole_length, ELET_OFST i_begin, ELET_OFST i_end) {
+void quaterProblem(ELET *xvalues, ELET *yvalues,
+                   INT32 seq,
+                   ELET_OFST whole_length,
+                   ELET_OFST i_begin, ELET_OFST i_end) {
   INT64 result = 0;
   INT64 minimum = ((INT64) 0x07ffffff << 32) + 0xffffffff;
 
@@ -25,28 +23,8 @@ void quaterProblem (ELET * xvalues, ELET * yvalues, INT32 seq, ELET_OFST whole_l
   minimums[seq] = minimum;
 }
 
-void initializeMinimums(){
-  INT32 num = DIVISION;
-#if defined(TARGET_OS_MAC) || !(defined(_WIN32))
-  num = std::thread::hardware_concurrency();
-  if (num < DIVISION) {
-    num = DIVISION;
-  }
-#endif
-  if (num <= 0) {
-    num = 8;
-  }
-  DIVISION = num;
-  Is_True(DIVISION > 0, << "CPU core num must be > 0" << std::endl);
-  minimums = new INT64[DIVISION];
-}
-
-void finalizeMinimums(){
-  free(minimums);
-}
-
 /******************************************************************************
- * Divide by a vector / use vector to calculate BC given AB and AC
+ * Brute force in tracking each pair of points and calc the distance between them
  * @param values
  * @param length
  * @param parentSpan
@@ -60,7 +38,6 @@ void tracedBrute (ELET *values, ELET_OFST length, SPTR parentSpan) {
   ELET * xvalues = values;
   ELET * yvalues = values + length;
 
-  INT64 result = 0;
   INT64 minimum = ((long) 0x07ffffff << 32) + 0xffffffff;
 
   std::thread ** th_arr = new std::thread* [DIVISION];

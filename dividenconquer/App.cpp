@@ -5,7 +5,9 @@ ELET *values = NULL;
 /**
  * Choosing which model to use from
  */
-WorkingModule current_sortmode = NP_Brute;
+WorkingModule current_sortmode = NP_Div_Axis;
+
+
 
 namespace {
 
@@ -42,7 +44,7 @@ namespace {
   }
 
   void tracedReduce(const std::unique_ptr<opentracing::Span> &parentSpan,
-                    ELET length) {
+                    ELET_OFST length) {
 
     std::string name = "basic-divide&conquer";
     IFSORT(NP_Brute, name = "NP_Brute")
@@ -71,9 +73,9 @@ namespace {
 
   void tracedLoop(SPTR &parentSpan) {
     // start globla init of 50000
-    ELET_OFST length = 100 * 10000;
+    ELET_OFST length = 1000;
     tracedInit(parentSpan, length);
-    for(ELET_OFST stepWidth = 10 * 10000; stepWidth <= length; stepWidth += (10 * 10000)) {
+    for(ELET_OFST stepWidth = 1000; stepWidth <= length; stepWidth += (10 * 10000)) {
       tracedReduce(parentSpan, stepWidth);
     }
     delete[] values;
@@ -99,3 +101,30 @@ int main(int argc, char *argv[]) {
   opentracing::Tracer::Global()->Close();
   return 0;
 }
+
+INT32 DIVISION = 8;
+INT64 *minimums = nullptr;
+
+void initializeMinimums(){
+  INT32 num = DIVISION;
+#if defined(TARGET_OS_MAC) || !(defined(_WIN32))
+  num = std::thread::hardware_concurrency();
+  if (num < DIVISION) {
+    num = DIVISION;
+  }
+#endif
+  if (num <= 0) {
+    num = 8;
+  }
+  DIVISION = num;
+  Is_True(DIVISION > 0, << "CPU core num must be > 0" << std::endl);
+  minimums = new INT64[DIVISION];
+  for (INT32 i = 0; i < DIVISION ; i++) {
+    minimums[i] = DISTANCE_MAX;
+  }
+}
+
+void finalizeMinimums(){
+  free(minimums);
+}
+

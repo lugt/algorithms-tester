@@ -11,9 +11,11 @@
 #include <yaml-cpp/yaml.h>
 #include <jaegertracing/Tracer.h>
 #include <stdlib.h>
+#include <array>
 
 #define DISTRIBUTE_MIN    1
 #define DISTRIBUTE_MAX    999999
+#define DISTANCE_MAX ((INT64) 0x07ffffff << 32) + 0xffffffff
 #define IFSORT(mode, code) if((current_sortmode) == (mode)) { code; }
 #define AS_CHILD_SPAN(val, name, parent)   auto val = opentracing::Tracer::Global()->\
 StartSpan(name, {opentracing::ChildOf(&parent->context())});
@@ -26,6 +28,9 @@ StartSpan(name, {opentracing::ChildOf(&parent->context())});
           exit(6); } ;
 
 using std::vector;
+using std::endl;
+using std::cout;
+using std::cerr;
 
 enum WorkingModule {
   NP_Brute,
@@ -52,17 +57,29 @@ extern ELET *values;
 
 extern WorkingModule current_sortmode;
 
+
+/******************************************************************************
+ *  Multi-Core Utilities
+ ******************************************************************************/
+extern INT32 DIVISION;
+extern INT64 *minimums;
+extern void initializeMinimums();
+extern void finalizeMinimums();
+
+/******************************************************************************
+ * Algorithms
+ ******************************************************************************/
+
 extern void tracedBrute (ELET *values, ELET_OFST length, SPTR parentSpan);
-
 extern void tracedDivAxis (ELET *values, ELET_OFST length, SPTR parentSpan);
-
 extern void tracedDivXYSpit (ELET *values, ELET_OFST length, SPTR parentSpan);
-
 extern void tracedDivCircle (ELET *values, ELET_OFST length, SPTR parentSpan);
-
 extern void tracedDivElliptic (ELET *values, ELET_OFST length, SPTR parentSpan);
-
 extern void tracedDivVectors (ELET *values, ELET_OFST length, SPTR parentSpan);
+
+/******************************************************************************
+ * MISC Utilities
+ ******************************************************************************/
 
 inline void swap_num(ELET_OFST left, ELET_OFST right) {
   ELET temp = values[left];
@@ -82,6 +99,14 @@ inline INT64 quad(INT64 x) {
   return x * x;
 }
 
+/******************************************************************************
+ * Distance Calculations
+ * @param x
+ * @param x2
+ * @param y
+ * @param y2
+ * @return
+ ******************************************************************************/
 inline F8 fDist(ELET x, ELET x2, ELET y, ELET y2) {
   return sqrt(quad(LL(x) - LL(x2)) + quad(LL(y) - LL(y2)));
 }
