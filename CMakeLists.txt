@@ -260,7 +260,7 @@ foreach(one ${exe_llist})
   aux_source_directory(${one} allcpp)
   add_executable(${one}_exe ${allcpp})
   target_link_libraries(${one}_exe PUBLIC ${JAEGERTRACING_LIB})
-  target_compile_options(${one}_exe PUBLIC "-g" "-O3" "-march=native" ) # "-O0"
+  target_compile_options(${one}_exe PUBLIC "-g" "-O0" "-march=native" ) # "-O0"
 endforeach()
 
 if(BUILD_TESTING)

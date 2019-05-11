@@ -33,9 +33,12 @@ typedef struct Reduction_t {
 } REDUCTION_RESULT;
 
 typedef struct Reduction_node_t {
-  ELET       *now = (ELET *) 0x3f3f3f3f3f3f3f3f;
-  INT32       pts = 0;
-  INT         depth = 0;
+  ELET              *now    = (ELET *) 0x3f3f3f3f3f3f3f3f;
+  INT32              pts    = 0;
+  INT                depth  = 0;
+  INT                moves  = 0;
+  INT                id     = 0;
+  INT                parent = 0;
 } REDUCTION_NODE;
 
 #include <boost/graph/graph_traits.hpp>

@@ -62,6 +62,8 @@ inline ELET & Get_position(ELET *map, ELET_OFST l, ELET_OFST r, ELET_OFST wid) {
   return map[l * wid + r];
 }
 
+static INT global_node_id = 1;
+
 REDUCTION_NODE Generate_c_prime(REDUCTION_CTX &p, REDUCTION_NODE &c,
                                 REDUCTION_RESULT & moves, INT num){
   INT width = p.width;
@@ -73,6 +75,9 @@ REDUCTION_NODE Generate_c_prime(REDUCTION_CTX &p, REDUCTION_NODE &c,
   pNode.now = copy;
   pNode.pts = c.pts;
   pNode.depth = c.depth + 1;
+  pNode.moves = 0;
+  pNode.id    = (++ global_node_id);
+  pNode.parent = c.id;
   INT cx1 = moves.x1[num];
   INT cx2 = moves.x2[num];
   INT cy1 = moves.y1[num];

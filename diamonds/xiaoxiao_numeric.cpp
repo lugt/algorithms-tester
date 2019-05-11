@@ -111,6 +111,8 @@ static BOOL Backtrack_accept(REDUCTION_CTX &p, REDUCTION_NODE &c){
   return true;
 }
 
+std::vector <REDUCTION_NODE> *nodes;
+
 /**
  * procedure bt(c)
   if reject(P,c) then return
@@ -139,8 +141,11 @@ static INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c) {
   // Traverse kids
   // printf("Backtracking ... \n");
 
-  INT64 total = moves.size;
-  INT local_max = c.pts;
+
+  INT total       = moves.size;
+  c.moves         = total;
+  INT local_max   = c.pts;
+
   if (total == 0) return local_max;
   for(INT i = 0; i < total; i++){
     // Calculate c'
@@ -151,26 +156,41 @@ static INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c) {
     if(somemax > local_max) {
       local_max = somemax;
     }
+    if(local_max > global_max_pts) {
+      global_max_pts = local_max;
+    }
+    nodes->push_back(cprime);
     // ADD free.
     free(cprime.now);
   }
 
   INT local_delta_max = local_max - c.pts;
-  printf("D:%d branch:%lld, c.pts: %d, max: %d, dmax: %d\n",
-         c.depth, total, c.pts, local_max, local_delta_max);
 
-  INT64 depth_num = (((UINT64) c.depth) << 32) + total;
+  if (local_max > global_max_pts) {
+    printf("D:%d branch:%d, c.pts: %d, max: %d, dmax: %d\n",
+      c.depth, total, c.pts, local_max, local_delta_max);
+    global_max_pts = local_max;
+  }
+
+
+  INT64 depth_num = (((UINT64) c.depth) << 32) + local_max;
+  //if (c.pts == 13 && c.depth == 1 && total == 4) {
+  //  pmap(c.now, p.width, p.height);
+  //}
   if (max_arriving_pts_depth_branch->count(depth_num) < 1) {
     max_arriving_pts_depth_branch->insert(std::make_pair(depth_num, c.pts));
     max_pts_per_depth_num_sum->insert(std::make_pair(depth_num, new vector<INT> ()));
     (*max_pts_per_depth_num_sum)[depth_num]->push_back(c.pts);
-    return local_max;
   }
   (*max_pts_per_depth_num_sum)[depth_num]->push_back(c.pts);
   INT depth_num_max = (*max_arriving_pts_depth_branch)[depth_num];
-  if (depth_num_max < c.pts) {
+  if (depth_num_max > c.pts) {
     (*max_arriving_pts_depth_branch)[depth_num] = c.pts;
   }
+
+  //printf("D:%d branch:%d, c.pts: %d, max: %d, dmax: %d\n",
+  //       c.depth, total, c.pts, local_max, local_delta_max);
+
   return local_max;
 }
 
@@ -181,7 +201,7 @@ INT Cross_retro_static (ELET *rand_values, ELET_OFST size, SPTR parentSpan) {
   // Generate Random Assemble
   // +Refine Assemble
   INT width = 4;
-  INT height = 8;
+  INT height = 9;
   ELET_OFST       len       = width * height;
   REDUCTION_CTX  *ctx       = new REDUCTION_CTX;
   ELET           *copy      = (ELET *) malloc(len * sizeof(ELET));
@@ -190,35 +210,65 @@ INT Cross_retro_static (ELET *rand_values, ELET_OFST size, SPTR parentSpan) {
   ctx->width                = width;
   ctx->height               = height;
   node->now                 = copy;
+  node->id                  = 0;
+  node->parent              = 0;
 
+  nodes                         = new std::vector<REDUCTION_NODE>;
   max_arriving_pts_depth_branch = new std::unordered_map<INT64, INT>;
-  max_pts_per_depth_num_sum = new std::unordered_map<INT64, vector<INT> * >;
+  max_pts_per_depth_num_sum     = new std::unordered_map<INT64, vector<INT> * >;
 
   Copy_map(copy, rand_values, width, height);
   refineNodes(copy, width, height, span);
   Backtrack_finding(*ctx, *node);
-  printf("Dynamic Global max = %d, times = %d \n", global_max_pts, backtrack_time);
+
+  printf("Static Global max = %d, times = %d \n", global_max_pts, backtrack_time);
 
   auto it = max_arriving_pts_depth_branch->begin();
-  INT *count = new INT[14 * 14];
-  memset(count, 0 , sizeof(INT) * 14 * 14);
+  INT wholeSize = 37;
+  INT *count = new INT[wholeSize * wholeSize];
+  memset(count, 0 , sizeof(INT) * wholeSize * wholeSize);
   for (; it != max_arriving_pts_depth_branch->end(); it++) {
     INT64 val = it->first;
     UINT depth = (UINT) (val >> 32);
-    UINT branch = (UINT) (val & 0x7fffffff);
-    if (depth < 14 && branch < 14) {
-      //printf("D: %d, B: %d, C.PTS: %d\n", depth, branch, it->second);
-      count[depth * 14 + branch] = it->second;
+    UINT second = (UINT) (val & 0x7fffffff);
+    if (depth < wholeSize && second < wholeSize) {
+      //printf("D: %d, B: %d, C.PTS: %d\n", depth, second, it->second);
+      count[depth * wholeSize + second] = it->second;
     }
   }
 
   puts("------------------------------------------------");
   puts("-D- -B- -MAX-");
-  for (INT b = 0; b < 14; b++) {
-    for (INT d = 0; d < 14; d ++) {
-      printf("%3d,%3d,%3d,\n", d, b, count[d * 14 + b]);
+  puts("------------------------------------------------");
+  CHPTR filename0 = new CHAR[100];
+  sprintf(filename0, "%s-%d-%d-%s", "arrive-min", width, height, ".json");
+  FILE * fp = fopen (filename0, "w+");
+  fputs("[", fp);
+  for (INT d = 0; d < wholeSize; d ++) {
+    for (INT b = 0; b < wholeSize; b++) {
+      fprintf(fp, "%3d,%3d,%3d", d, b, count[d * wholeSize + b]);
+      if (b != wholeSize - 1 || d != wholeSize - 1) {
+        fputs(",\n", fp);
+      } else {
+        fputs("\n", fp);
+      }
     }
   }
-  // Start of Reduction Process
+  fputs("]", fp);
+  fclose(fp);
+
+  CHPTR q = new CHAR[100];
+  sprintf(q, "%s-%d-%d-%s", "graph", width, height, ".json");
+  fp = fopen (q, "w+");
+  puts("------------------------------------------------");
+  puts("------ Graph.json ------");
+  puts("------------------------------------------------");
+  fputs("[", fp);
+  auto one = nodes->begin();
+  for (; one != nodes->end(); one++) {
+    fprintf(fp, "{\"id\":%d,\"d\":%d,\"p\":%d,\"b\":%d,\"l\":%d},\n", one->id, one->depth, one->pts, one->moves, one->parent);
+  }
+  fputs("]", fp);
+  fclose(fp);
   return 0;
 }
