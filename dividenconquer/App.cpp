@@ -24,7 +24,8 @@ namespace {
                   ELET_OFST length) {
 
     ELET_OFST real_len = length * 2;
-    Is_True(length > 0, << "length must be greater than 0, given : " << length);
+    Is_True(length > 0 && length <= MAX_INDEX,
+      << "length must be greater than 0 and less than "<< MAX_INDEX <<", given : " << length);
 
     AS_CHILD_SPAN(span, "initialization", parentSpan);
     std::ostringstream oss;
@@ -73,9 +74,9 @@ namespace {
 
   void tracedLoop(SPTR &parentSpan) {
     // start globla init of 50000
-    ELET_OFST length = 1000;
+    ELET_OFST length = 150 * 10000;
     tracedInit(parentSpan, length);
-    for(ELET_OFST stepWidth = 1000; stepWidth <= length; stepWidth += (10 * 10000)) {
+    for(ELET_OFST stepWidth = 10 * 10000; stepWidth <= length; stepWidth += (10 * 10000)) {
       tracedReduce(parentSpan, stepWidth);
     }
     delete[] values;

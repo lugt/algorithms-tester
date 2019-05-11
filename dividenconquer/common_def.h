@@ -15,6 +15,7 @@
 
 #define DISTRIBUTE_MIN    1
 #define DISTRIBUTE_MAX    999999
+#define MAX_INDEX  2000000
 #define DISTANCE_MAX ((INT64) 0x07ffffff << 32) + 0xffffffff
 #define IFSORT(mode, code) if((current_sortmode) == (mode)) { code; }
 #define AS_CHILD_SPAN(val, name, parent)   auto val = opentracing::Tracer::Global()->\
@@ -22,7 +23,7 @@ StartSpan(name, {opentracing::ChildOf(&parent->context())});
 #define SPAN_OK(span) span->Finish();
 #define Is_True(x, y) if(!(x)) { \
           std::cerr << "Assertion failed during Working Mode [" << current_sortmode << "]" << std::endl ;  \
-          std::cerr << "Triggered by " << __FILE__ << ":" << __LINE__ << std::endl ;  \
+          std::cerr << "Triggered by " << __FILE__ << ":" << __func__ << ":" << __LINE__ << std::endl ;  \
           std::cerr y ; \
           std::cerr << std::endl; \
           exit(6); } ;
@@ -57,6 +58,7 @@ extern ELET *values;
 
 extern WorkingModule current_sortmode;
 
+static BOOL tracing = false;
 
 /******************************************************************************
  *  Multi-Core Utilities
