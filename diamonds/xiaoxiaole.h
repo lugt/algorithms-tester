@@ -68,16 +68,40 @@ typedef struct Reduction_ctx_t {
 
 typedef INT    CROSS_NODE;
 
+EXTERN INT global_max_pts;
+EXTERN INT backtrack_time;
+
 EXTERN INT main (INT args, CHPPTR argv);
 EXTERN INT Cross_retro (ELET *values, ELET_OFST size, SPTR parentSpan);
-EXTERN INT Cross_graph (ELET *values, ELET_OFST size, SPTR parentSpan);
+//EXTERN INT Cross_graph (ELET *values, ELET_OFST size, SPTR parentSpan);
+EXTERN INT Cross_Dynamic (ELET *values, ELET_OFST size, SPTR parentSpan);
+EXTERN INT Cross_retro_static (ELET *values, ELET_OFST size, SPTR parentSpan);
+//EXTERN INT Cross_retro_sample (ELET *values, ELET_OFST size, SPTR parentSpan);
+
 EXTERN void *Cross_malloc(INT size);
+
 EXTERN REDUCTION_RESULT Reduce_assemble(ASSEMBLE *assemble);
 EXTERN CROSS_NODE *Create_rectangle(INT width, INT height);
+
 EXTERN void Cross_memory_push();
 EXTERN void Cross_memory_pop();
 
-EXTERN INT  Backtrack_finding (REDUCTION_CTX &p, REDUCTION_NODE &c);
-EXTERN REDUCTION_NODE Generate_c_prime (REDUCTION_CTX &p, REDUCTION_NODE &c, REDUCTION_RESULT & moves, INT num);
+EXTERN REDUCTION_RESULT find_all_possible_swap(ELET *map, ELET_OFST wid, ELET_OFST height);
+
+EXTERN REDUCTION_NODE Generate_c_prime (REDUCTION_CTX &p, REDUCTION_NODE &c,
+  REDUCTION_RESULT & moves, INT num);
+
+EXTERN REDUCTION_NODE Generate_c_prime(REDUCTION_CTX &p, REDUCTION_NODE &c,
+  REDUCTION_RESULT & moves, INT num, SPTR parent);
+
+EXTERN inline ELET & Get_position(ELET *map, ELET_OFST l, ELET_OFST r, ELET_OFST wid);
+
+EXTERN void Backtrack_record_output (REDUCTION_CTX &p, REDUCTION_NODE &c);
+
+EXTERN bool refineNodes(ELET *m, ELET_OFST wid, ELET_OFST height, SPTR parentSpan);
+
+inline void Copy_map(ELET *targ, ELET *src, ELET_OFST w, ELET_OFST h) {
+  memcpy(targ, src, w * h * sizeof (ELET));
+}
 
 #endif //GRAPH_XIAOXIAOLE_H

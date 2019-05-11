@@ -8,9 +8,6 @@
 
 #include <list>
 
-typedef std::list<INT> LINTLIST;
-//std::unordered_map<ASSEMBLE_TOKEN, INT remain_count> all_map = 0;
-
 INT global_max_pts = 0;
 INT backtrack_time = 0;
 
@@ -24,21 +21,21 @@ REDUCTION_RESULT find_all_possible_swap(ELET *map, ELET_OFST wid, ELET_OFST heig
     for (int j = 0; j < wid; ++j)
     {
       // printf ("[FIND_SWAP] checking on %d, %d \n", i, j);
-      flag = swapAndJudge(map, i, j, wid, height); 
+      flag = swapAndJudge(map, i, j, wid, height);
       if (flag & (4 | 8))
       {
-	res.x1[res.size] = i;
-	res.y1[res.size] = j;
-	res.x2[res.size] = i + 1;
-	res.y2[res.size] = j;
-  	res.size ++;
+        res.x1[res.size] = i;
+        res.y1[res.size] = j;
+        res.x2[res.size] = i + 1;
+        res.y2[res.size] = j;
+        res.size ++;
         // printf("[FIND_SWAP] possible swap : (%d, %d, DOWN) \n", i, j);
       } else if (flag & (16 | 32)) {
-	res.x1[res.size] = i;
-	res.y1[res.size] = j;
-	res.x2[res.size] = i;
-	res.y2[res.size] = j + 1;
-  	res.size ++;
+        res.x1[res.size] = i;
+        res.y1[res.size] = j;
+        res.x2[res.size] = i;
+        res.y2[res.size] = j + 1;
+        res.size ++;
         //printf("[FIND_SWAP] possible swap : (%d, %d, RIGHT) \n", i, j);
       }
     }
@@ -46,16 +43,13 @@ REDUCTION_RESULT find_all_possible_swap(ELET *map, ELET_OFST wid, ELET_OFST heig
   return res;
 }
 
-inline void Copy_map(ELET *targ, ELET *src, ELET_OFST w, ELET_OFST h) {
-  memcpy(targ, src, w * h * sizeof (ELET));
-}
 
-BOOL Backtrack_reject(REDUCTION_CTX &p, REDUCTION_NODE &c){
+static BOOL Backtrack_reject(REDUCTION_CTX &p, REDUCTION_NODE &c){
   // no, go on
   return false;
 }
 
-BOOL Backtrack_accept(REDUCTION_CTX &p, REDUCTION_NODE &c){
+static BOOL Backtrack_accept(REDUCTION_CTX &p, REDUCTION_NODE &c){
   return true;
 }
 
@@ -64,14 +58,12 @@ void Backtrack_record_output (REDUCTION_CTX &p, REDUCTION_NODE &c) {
   pmap(c.now, p.width, p.height);
 }
 
-
 inline ELET & Get_position(ELET *map, ELET_OFST l, ELET_OFST r, ELET_OFST wid) {
   return map[l * wid + r];
 }
 
-
 REDUCTION_NODE Generate_c_prime(REDUCTION_CTX &p, REDUCTION_NODE &c,
-				REDUCTION_RESULT & moves, INT num){
+                                REDUCTION_RESULT & moves, INT num){
   INT width = p.width;
   INT height = p.height;
   ELET_OFST       len       = width * height;
@@ -100,14 +92,66 @@ REDUCTION_NODE Generate_c_prime(REDUCTION_CTX &p, REDUCTION_NODE &c,
 
 
 REDUCTION_NODE Generate_c_prime(REDUCTION_CTX &p, REDUCTION_NODE &c,
-				REDUCTION_RESULT & moves, INT num, SPTR parent){
+                                REDUCTION_RESULT & moves, INT num, SPTR parent){
   AS_CHILD_SPAN(span, "generate-c-prime", parent);
   return Generate_c_prime(p, c, moves, num);
 }
 
-INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c, SPTR parentSpan) {
+/**
+ * procedure bt(c)
+  if reject(P,c) then return
+  if accept(P,c) then output(P,c)
+  s ← first(P,c)
+  while s ≠ Λ do
+    bt(s)
+    s ← next(P,s)
+ */
+static INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c) {
+  backtrack_time ++;
+  if (Backtrack_reject(p, c)) {
+    // free(c.now);
+    // c.now = NULL;
+    return 0;
+  }
+  if (Backtrack_accept(p, c)) {
+    // Backtrack_record_output(p, c);
+  }
+  // Traverse kids
+  // printf("Backtracking ... \n");
+  REDUCTION_RESULT moves = find_all_possible_swap(
+    c.now,
+    p.width,
+    p.height);
+
+  INT   local_max    = 0;
+  INT   local_delta  = 0;
+  INT64 total        = moves.size;
+
+  if (c.depth <= 3) {
+    printf("D:%d sub: %lld\n", c.depth, total);
+  }
+
+  if (total == 0) return 0;
+  for(INT i = 0; i < total; i++){
+    // Calculate c'
+    REDUCTION_NODE cprime = Generate_c_prime(p, c, moves, i);
+
+    if(cprime.pts > local_max) local_max = cprime.pts;
+    if(cprime.pts - c.pts > local_delta) local_delta = cprime.pts - c.pts;
+
+    Backtrack_finding(p, cprime);
+    // ADD free.
+    free(cprime.now);
+  }
+  // Free of data
+  // puts("Backtracking finish ...");
+  return total;
+}
+
+
+static INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c, SPTR parentSpan) {
   AS_CHILD_SPAN (span, "backtrack-find", parentSpan);
-  
+
   backtrack_time ++;
   if (Backtrack_reject(p, c)) {
     // free(c.now);
@@ -126,7 +170,7 @@ INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c, SPTR parentSpan) {
     p.height);
 
   possible_swap->Finish();
-  
+
   INT64 total = moves.size;
   //  printf("D:%d sub: %lld\n", c.depth, total);
   std::ostringstream oss;
@@ -138,7 +182,7 @@ INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c, SPTR parentSpan) {
   if (c.depth < 1) {
     for(INT i = 0; i < total; i++){
       // Calculate c'
-      REDUCTION_NODE cprime = Generate_c_prime(p, c, moves, i, span);   
+      REDUCTION_NODE cprime = Generate_c_prime(p, c, moves, i, span);
       Backtrack_finding(p, cprime, span);
       // ADD free.
       free(cprime.now);
@@ -146,53 +190,12 @@ INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c, SPTR parentSpan) {
   } else {
     for(INT i = 0; i < total; i++){
       // Calculate c'
-      REDUCTION_NODE cprime = Generate_c_prime(p, c, moves, i);   
+      REDUCTION_NODE cprime = Generate_c_prime(p, c, moves, i);
       Backtrack_finding(p, cprime);
       // ADD free.
       free(cprime.now);
     }
 
-  }
-  // Free of data
-  // puts("Backtracking finish ...");
-  return total;
-}
-
-/**
- * procedure bt(c)
-  if reject(P,c) then return
-  if accept(P,c) then output(P,c)
-  s ← first(P,c)
-  while s ≠ Λ do
-    bt(s)
-    s ← next(P,s)
- */
-INT Backtrack_finding(REDUCTION_CTX &p, REDUCTION_NODE &c) {
-  backtrack_time ++;
-  if (Backtrack_reject(p, c)) {
-    // free(c.now);
-    // c.now = NULL;
-    return 0;
-  }
-  if (Backtrack_accept(p, c)) {
-    // Backtrack_record_output(p, c);
-  }
-  // Traverse kids
-  // printf("Backtracking ... \n");
-  REDUCTION_RESULT moves = find_all_possible_swap(
-    c.now,
-    p.width,
-    p.height);
-
-  INT64 total = moves.size;
-  printf("D:%d sub: %lld\n", c.depth, total);
-  if (total == 0) return 0;
-  for(INT i = 0; i < total; i++){
-    // Calculate c'
-    REDUCTION_NODE cprime = Generate_c_prime(p, c, moves, i);
-    Backtrack_finding(p, cprime);
-    // ADD free.
-    free(cprime.now);
   }
   // Free of data
   // puts("Backtracking finish ...");
@@ -258,28 +261,6 @@ INT Cross_retro (ELET *rand_values, ELET_OFST size, SPTR parentSpan) {
   refineNodes(copy, width, height, span);
   Backtrack_finding(*ctx, *node, span);
   printf("Global max = %d, times = %d \n", global_max_pts, backtrack_time);
-  // Start of Reduction Process
-  return 0;
-}
-
-
-INT Cross_graph (ELET *rand_values, ELET_OFST size, SPTR parentSpan) {
-  AS_CHILD_SPAN(span, "Cross-graph-whole", parentSpan);
-  // INT64 correct_size = size >> 8;
-  // Generate Random Assemble
-  // +Refine Assemble
-  INT width = 4;
-  INT height = 8;
-  ELET_OFST       len       = width * height;
-  REDUCTION_CTX  *ctx       = new REDUCTION_CTX;
-  ELET           *copy      = (ELET *) malloc(len * sizeof(ELET));
-  REDUCTION_NODE *node      = new REDUCTION_NODE;
-  ctx->value                = rand_values;
-  ctx->width                = width;
-  ctx->height               = height;
-  node->now                 = copy;
-  Copy_map(copy, rand_values, width, height);
-  Backtrack_finding(*ctx, *node);
   // Start of Reduction Process
   return 0;
 }

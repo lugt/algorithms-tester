@@ -56,6 +56,7 @@ typedef char*                  CHPTR;
 typedef char**                 CHPPTR;
 typedef const char*            CCHPTR;
 typedef const char**           CCHPPTR;
+typedef unsigned __int128      UINT128; // for hash
 
 typedef const std::unique_ptr<opentracing::Span> & SPTR;
 typedef INT32 ELET;

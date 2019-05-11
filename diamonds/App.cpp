@@ -3,11 +3,16 @@
 
 enum SortMode {
   Three_Cross_Retro,
-  Three_Cross_Graph
+  Three_Cross_Dynamic,
+  Three_Cross_Static,
+  Three_Cross_Sample,
+  Three_Cross_Graph_Based,
+  Three_Cross_Graph_Sampling,
+  Three_Cross_ML
 };
 
 ELET *values = NULL;
-SortMode current_sortmode = Three_Cross_Retro;
+SortMode current_sortmode = Three_Cross_Static;
 
 namespace {
 
@@ -46,7 +51,13 @@ namespace {
 
     std::string name = "basic-sort";
     IFSORT(Three_Cross_Retro, name = "Three_Cross_Retro")
-    IFSORT(Three_Cross_Graph, name = "Three_Cross_Graph")
+    IFSORT(Three_Cross_Retro, name = "Three_Cross_Retro")
+    IFSORT(Three_Cross_Dynamic, name = "Three_Cross_Dynamic")
+    IFSORT(Three_Cross_Static, name = "Three_Cross_Static")
+    IFSORT(Three_Cross_Sample, name = "Three_Cross_Sample")
+    IFSORT(Three_Cross_Graph_Based, name = "Three_Cross_Graph_Based")
+    IFSORT(Three_Cross_Graph_Sampling, name = "Three_Cross_Graph_Sampling")
+    IFSORT(Three_Cross_ML, name = "Three_Cross_ML")
 
     AS_CHILD_SPAN(span, name, parentSpan);
 
@@ -56,13 +67,18 @@ namespace {
     ELET_OFST track_length = length;
 
     IFSORT(Three_Cross_Retro, Cross_retro(values, track_length, span);)
-    IFSORT(Three_Cross_Graph, Cross_graph(values, track_length, span);)
+    IFSORT(Three_Cross_Dynamic, Cross_Dynamic(values, track_length, span);)
+    IFSORT(Three_Cross_Static, Cross_retro_static(values, track_length, span);)
+    IFSORT(Three_Cross_Sample, Cross_retro_static(values, track_length, span);)
+    IFSORT(Three_Cross_Graph_Based, Cross_retro_static(values, track_length, span);)
+    IFSORT(Three_Cross_Graph_Sampling, Cross_retro_static(values, track_length, span);)
+    IFSORT(Three_Cross_ML, Cross_retro_static(values, track_length, span);)
     span->Finish();
   }
 
   void tracedLoop(SPTR &parentSpan) {
     // start globla init of 50000
-    ELET_OFST length = 10;
+    ELET_OFST length = 9;
     tracedInit(parentSpan, length);
     for(ELET_OFST stepWidth = length; stepWidth <= length; stepWidth += 20) {
       tracedReduce(parentSpan, stepWidth);
